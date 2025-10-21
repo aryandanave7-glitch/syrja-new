@@ -324,13 +324,30 @@ socket.on("call-ended", ({ to, from }) => {
     console.log(`Client ${socket.id} joined ${room}`);
   });
 
-  socket.on("signal", ({ room, payload }) => {
-    socket.to(room).emit("signal", payload);
-  });
+  // Inside server.js
+socket.on("auth", ({ room, payload }) => {
+  // Log exactly what's received
+  console.log(`[SERVER] Received auth for room ${room} from ${socket.id}. Kind: ${payload?.kind}`); // Added log
+  try {
+    // Log before attempting to emit
+    console.log(`[SERVER] Relaying auth (Kind: ${payload?.kind}) to room ${room}...`); // Added log
+    // Use io.to(room) to send to everyone in the room including potentially the sender if needed,
+    // or socket.to(room) to send to everyone *except* the sender.
+    // For auth handshake, io.to(room) or socket.to(room).emit should both work if both clients joined. Let's stick with socket.to for now.
+    socket.to(room).emit("auth", { room, payload });
+    console.log(`[SERVER] Successfully emitted auth to room ${room}.`); // Added log
+  } catch (error) {
+    console.error(`[SERVER] Error emitting auth to room ${room}:`, error); // Added error log
+  }
+});
 
-  socket.on("auth", ({ room, payload }) => {
-    socket.to(room).emit("auth", payload);
-  });
+// ALSO add logging for the 'signal' handler for WebRTC messages:
+socket.on("signal", ({ room, payload }) => {
+  console.log(`[SERVER] Received signal for room ${room} from ${socket.id}.`); // Added log
+  console.log(`[SERVER] Relaying signal to room ${room}...`); // Added log
+  socket.to(room).emit("signal", { room, payload }); // Assuming payload includes 'from' etc needed by client
+  console.log(`[SERVER] Successfully emitted signal to room ${room}.`); // Added log
+});
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
