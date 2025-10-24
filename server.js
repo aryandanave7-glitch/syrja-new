@@ -182,6 +182,8 @@ io.on("connection", (socket) => {
     userSockets[key] = socket.id;
     socket.data.pubKey = key; // Store key on socket for later cleanup
     console.log(`🔑 Registered: ${key.slice(0,12)}... -> ${socket.id}`);
+
+    socket.emit('registered', { status: 'ok' });
     
   // --- Notify subscribers that this user is now online ---
     const subscribers = presenceSubscriptions[key];
